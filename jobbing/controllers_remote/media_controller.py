@@ -19,7 +19,6 @@ from jobbing.models_remote.media import Media # noqa: E501
 """
 GET /media/:id
 """
-@token_required
 def get_media_by_id(media_id):
     """get_media_by_id
 

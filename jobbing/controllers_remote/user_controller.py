@@ -156,7 +156,6 @@ def get_user_address_by_id(user_model_id): # noqa: E501
 """
 GET users/:id/media
 """
-@token_required
 def get_user_media_by_id(user_model_id): # noqa: E501
     """get_user_address_by_id
 
