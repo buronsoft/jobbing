@@ -17,6 +17,28 @@ servers:
 - url: https://127.0.0.1:4010
   description: Development server (uses test data)
 paths:
+  /signup:
+    post:
+      tags:
+      - Authentication
+      description: Authenticates user
+      operationId: signup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupSchema'
+        required: true
+      responses:
+        "200":
+          description: successful response
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{\"message\":\"signed up\"}"
+                x-content-type: application/json
+      x-openapi-router-controller: jobbing.controllers_remote.user_controller
   /login:
     post:
       tags:
@@ -36,7 +58,7 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "{\"message\":\"loged in\"}"
+                example: "{\"message\":\"logged in\"}"
                 x-content-type: application/json
       x-openapi-router-controller: jobbing.controllers_remote.user_controller
   /logout:
@@ -2681,6 +2703,9 @@ components:
         user_auth_name:
           type: string
           example: "username"
+        user_auth_email:
+          type: string
+          example: "testaddress@mail.com"
       example:
         user_auth_id: 1
         user_auth_password: "D78$%#@"
@@ -2748,6 +2773,26 @@ components:
           example: 'admin'
       example:
         user_auth_name: 'admin'
+        user_auth_password: 'admin'
+    SignupSchema:
+      required:
+      - user_auth_name
+      - user_auth_email
+      - user_auth_password
+      type: object
+      properties:
+        user_auth_name:
+          type: string
+          example: 'admin'
+        user_auth_email:
+          type: string
+          example: 'test.address@mail.com'
+        user_auth_password:
+          type: string
+          example: 'admin'
+      example:
+        user_auth_name: 'admin'
+        user_auth_email: 'test.address@mail.com'
         user_auth_password: 'admin'
     Org:
       required:

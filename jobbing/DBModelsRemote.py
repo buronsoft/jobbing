@@ -205,19 +205,22 @@ class UserAuth(UserMixin, db.Model):
     user_model_id = db.Column(db.Integer)
     user_auth_updated_date = db.Column(db.String(50)) # FIXME: Timestamp to Date in Python
     user_auth_name = db.Column(db.String(30))
+    user_auth_email = db.Column(db.String(100))
 
     def __init__(self, user_auth_id:int = None,  
             user_auth_password:str = None, 
             user_auth_pass_date:str = None, 
             user_model_id:int = None, 
             user_auth_updated_date:str = None, 
-            user_auth_name:str = None,):
+            user_auth_name:str = None,
+            user_auth_email:str = None):
         self.user_auth_id = user_auth_id
         self.user_auth_name = user_auth_name
         self.user_auth_password = generate_password_hash(user_auth_password)
         self.user_auth_pass_date = user_auth_pass_date
         self.user_model_id = user_model_id
         self.user_auth_updated_date = user_auth_updated_date
+        self.user_auth_email = user_auth_email
     
     def set_password(self, user_auth_password):
         self.user_auth_password = generate_password_hash(user_auth_password)

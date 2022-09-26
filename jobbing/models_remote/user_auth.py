@@ -16,7 +16,8 @@ class UserAuth(Model):
 			user_auth_pass_date:str = None,
 			user_model_id:int = None,
 			user_auth_updated_date:str = None,
-			user_auth_name:str = None): # noqa: E501
+			user_auth_name:str = None,
+			user_auth_email:str = None): # noqa: E501
 
 		self.swagger_types = {
 			'user_auth_id': int,
@@ -24,7 +25,8 @@ class UserAuth(Model):
 			'user_auth_pass_date': str,
 			'user_model_id': int,
 			'user_auth_updated_date': str,
-			'user_auth_name': str
+			'user_auth_name': str,
+			'user_auth_email': str
 		}
 
 		self.attribute_map = {
@@ -33,7 +35,8 @@ class UserAuth(Model):
 			'user_auth_pass_date': 'user_auth_pass_date',
 			'user_model_id': 'user_model_id',
 			'user_auth_updated_date': 'user_auth_updated_date',
-			'user_auth_name': 'user_auth_name'
+			'user_auth_name': 'user_auth_name',
+			'user_auth_email': 'user_auth_email'
 		}
 
 		self._user_auth_id = user_auth_id
@@ -42,6 +45,7 @@ class UserAuth(Model):
 		self._user_model_id = user_model_id
 		self._user_auth_updated_date = user_auth_updated_date
 		self._user_auth_name = user_auth_name
+		self._user_auth_email = user_auth_email
 
 	@classmethod
 	def from_dict(cls, dikt) -> 'UserAuth':
@@ -106,4 +110,14 @@ class UserAuth(Model):
 		if param is None:
 			raise ValueError("Invalid value for `user_auth_name`, must not be `None`")  # noqa: E501
 		self._user_auth_name = param
+
+	@property
+	def user_auth_email(self) -> str:
+		return self._user_auth_email
+
+	@user_auth_email.setter
+	def user_auth_email(self, param):
+		if param is None:
+			raise ValueError("Invalid value for `user_auth_email`, must not be `None`")  # noqa: E501
+		self._user_auth_email = param
 

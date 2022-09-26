@@ -2,6 +2,8 @@ from flask import abort, make_response, Response
 from flask import current_app, jsonify
 from flask_login import logout_user, login_user
 
+import datetime
+
 from werkzeug.security import generate_password_hash, check_password_hash
 import connexion
 import jwt
@@ -227,6 +229,54 @@ def get_users_with_filter(user_role_id=None, status_id=None, skill_id=None): # n
         u.user_model_description, 
         get_user_professions(u.user_model_id), 
         get_user_working_areas(u.user_model_id)) for u in users]
+
+"""
+POST /signup
+"""
+def signup(body): #noqa: E501
+    if not body or not body["user_auth_name"] or not body["user_auth_email"] or not body["user_auth_password"]:
+        # return 401 if a field is missing
+        return make_response('Could not verify', 401,
+            {'WWW-Authenticate' : 'Basic realm ="Signup fields missing !!"'}
+        )
+
+    if connexion.request.is_json:
+        print(connexion.request.get_json())
+        body = UserAuth.from_dict(connexion.request.get_json())
+
+        user = DBUserModel(
+            user_status_id = 1, 
+            user_role_id = 4, 
+            user_model_first_name = '', 
+            user_model_last_name = '', 
+            user_model_surname = '', 
+            user_model_birthday = '1970-01-01',
+            user_model_phone_number = '', 
+            user_model_media_id = 1, 
+            user_model_org = 1, 
+        )
+
+        db.session.add(user)
+        db.session.commit()
+        db.session.refresh(user)
+
+        user_auth = DBUserAuth(
+            user_auth_name = body.user_auth_name, 
+            user_auth_email = body.user_auth_email,
+            user_auth_password = body.user_auth_password, 
+            user_model_id = user.user_model_id,
+            user_auth_updated_date = datetime.now().strftime("%Y/%m/%d %H:%M:%S"),
+            user_auth_pass_date = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+        )
+
+        db.session.add(user_auth)
+        db.session.commit()
+        db.session.refresh(user_auth)
+
+        return (Response(), 201)
+
+    return (Response(), 401)
+    
 
 """
 POST /login 
