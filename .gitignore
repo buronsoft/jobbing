@@ -65,3 +65,7 @@ target/
 
 # Env variables
 .env
+
+# Google credentials
+jobbing\client_secret.json
+jobbing\token.json

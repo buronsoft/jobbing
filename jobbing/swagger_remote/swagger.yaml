@@ -80,9 +80,54 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "{\"message\":\"loged in\"}"
+                example: "{\"message\":\"logged out\"}"
                 x-content-type: application/json
       x-openapi-router-controller: jobbing.controllers.user_controller
+  /recoverpwd:
+    post:
+      tags:
+      - Authentication
+      description: Authenticates user
+      operationId: recoverpwd
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+              example: 'testaddress@mail.com'
+        required: true
+      responses:
+        "200":
+          description: successful response
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{\"message\":\"recovery email sent\"}"
+                x-content-type: application/json
+      x-openapi-router-controller: jobbing.controllers_remote.user_controller
+  /resetpwd:
+    post:
+      tags:
+      - Authentication
+      description: Authenticates user
+      operationId: resetpwd
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PwdResetSchema'
+        required: true
+      responses:
+        "200":
+          description: successful response
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "{\"message\":\"password reset\"}"
+                x-content-type: application/json
+      x-openapi-router-controller: jobbing.controllers_remote.user_controller
   /countries:
     get:
       tags:
@@ -2794,6 +2839,21 @@ components:
         user_auth_name: 'admin'
         user_auth_email: 'test.address@mail.com'
         user_auth_password: 'admin'
+    PwdResetSchema:
+      required:
+      - user_new_password
+      - reset_token
+      type: object
+      properties:
+        user_new_password:
+          type: string
+          example: '4bcDefgh!'
+        reset_token:
+          type: string
+          example: 'h79kxVMgtC9FzULZQHFn'
+      example:
+        user_new_password: '4bcDefgh!'
+        reset_token: 'h79kxVMgtC9FzULZQHFn'
     Org:
       required:
       - org_id

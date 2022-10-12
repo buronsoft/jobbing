@@ -2,10 +2,9 @@ from flask import abort, make_response, Response
 from flask import current_app, jsonify
 from flask_login import logout_user, login_user
 
-import datetime
-
 from werkzeug.security import generate_password_hash, check_password_hash
 import connexion
+import json
 import jwt
 from datetime import datetime, timedelta
 from jobbing.login import login_manager, token_required
@@ -33,6 +32,15 @@ from jobbing.models_remote.evidence import Evidence # noqa: E501
 from jobbing.models_remote.working_area import WorkingArea # noqa: E501
 from jobbing.models_remote.public_user_model import PublicUserModel # noqa: E501
 
+# Gmail service
+import base64
+import os.path
+from email.message import EmailMessage
+
+import google.auth
+from googleapiclient.discovery import build
+from google.oauth2.credentials import Credentials
+from googleapiclient.errors import HttpError
 
 """
 GET /users
@@ -283,7 +291,7 @@ POST /login
 """
 def login(body): # noqa: E501
     if not body or not body["user_auth_name"] or not body["user_auth_password"]:
-        # returns 401 if any email or / and password is missing
+        # returns 401 if any username or / and password is missing
         return make_response('Could not verify', 401,
             {'WWW-Authenticate' : 'Basic realm ="Login required !!"'}
         )
@@ -309,6 +317,87 @@ def login(body): # noqa: E501
             'token' : token, 
             'user_model_id': user.user_model_id, 
             'user_auth_id': user.user_auth_id}), 201)
+
+"""
+POST /recoverpwd
+"""
+def recoverpwd(body): # noqa: E501
+    if not body:
+        # returns 401 if any email or / and password is missing
+        return make_response('Could not verify', 401,
+            {'WWW-Authenticate' : 'Basic realm ="Email required !!"'}
+        )
+
+    auth = DBUserAuth.query.filter(DBUserAuth.user_auth_email == body).first()
+    
+    if not auth:
+        # returns false if user does not exist
+        return make_response(json.dumps(False), 201)
+
+    creds = Credentials.from_authorized_user_file(os.path.dirname(__file__) +'/../token.json')
+
+    service = build('gmail', 'v1', credentials=creds)
+
+    message = EmailMessage()
+
+    token = jwt.encode({'reset_password': auth.user_auth_name,
+                          'exp':    datetime.utcnow() + timedelta(minutes = 30)},
+                          current_app.secret_key, algorithm="HS256")
+
+    link = f"http://localhost:4200/resetPassword/{token}" # FIXME: CHANGE TO FINAL URL
+    message.set_content(f'Go to this link to reset your password:\n{link}')
+    message.add_alternative(f"""\
+    <html>
+        <head></head>
+        <body>
+        <p>Haga click <a href="{link}">aquí</a> para reestablecer su contraseña.</p>
+        </body>
+    </html>
+        """, subtype='html')
+    message['To'] = body
+    message['From'] = 'bancodeempleosjalisco@gmail.com'
+    message['Subject'] = 'Reestablecimiento de contraseña'
+
+    # encoded message
+    encoded_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+
+    create_message = {
+        'raw': encoded_message
+    }
+    # pylint: disable=E1101
+    send_message = (service.users().messages().send
+        (userId="me", body=create_message).execute())
+
+    return make_response(json.dumps(True), 201)
+
+"""
+POST /resetpwd
+"""
+def resetpwd(body): # noqa: E501
+    if not body or not body["user_new_password"] or not body["reset_token"]:
+        # returns 401 if password or token are missing
+        return make_response('Could not verify', 401,
+            {'WWW-Authenticate' : 'Basic realm ="Login required !!"'}
+        )
+
+    try:
+        username = jwt.decode(body["reset_token"],
+              current_app.secret_key, algorithms="HS256")['reset_password']    
+    except:
+        return make_response(json.dumps(False), 201)
+
+    auth = DBUserAuth.query.filter(DBUserAuth.user_auth_name == username).first()
+
+    if not auth:
+        # returns false if user does not exist
+        return make_response(json.dumps(False), 201)
+
+    setattr(auth, 'user_auth_password', generate_password_hash(body["user_new_password"]))
+    setattr(auth, 'user_auth_updated_date', datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
+    setattr(auth, 'user_auth_pass_date', datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
+    db.session.commit()
+
+    return make_response(json.dumps(True), 201)
 
 """
 PUT /users
