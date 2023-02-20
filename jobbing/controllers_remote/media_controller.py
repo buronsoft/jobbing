@@ -33,7 +33,7 @@ def get_media_by_id(media_id):
 
     return Media(
         media_status_id = media.media_status_id, 
-        media_data = media.media_data.decode(), 
+        media_data = media.media_data, 
         media_link = media.media_link, 
         media_title = media.media_title, 
         media_description = media.media_description, 
@@ -62,11 +62,13 @@ def post_media(body):
 
         media = DBMedia(
             media_status_id = body.media_status_id, 
-            media_data = bytes(body.media_data, 'utf-8'), 
+            media_data = body.media_data, 
             media_link = body.media_link, 
             media_title = body.media_title, 
             media_description = body.media_description, 
-            media_size = body.media_size
+            media_size = body.media_size,
+            media_content_upload_date = body.media_content_upload_date, 
+            media_content_updated_date = body.media_content_updated_date
         )
 
         db.session.add(media)
@@ -75,7 +77,7 @@ def post_media(body):
 
         return Media(
             media_status_id = media.media_status_id, 
-            media_data = media.media_data.decode(), 
+            media_data = media.media_data, 
             media_link = media.media_link, 
             media_title = media.media_title, 
             media_description = media.media_description, 
@@ -110,7 +112,7 @@ def put_media(body): # noqa: E501
         
         # Only if the row exists
         db.session.query(DBMedia).filter(DBMedia.media_id == body.media_id).update(
-            {DBMedia.media_data : bytes(body.media_data, 'utf-8'), 
+            {DBMedia.media_data : body.media_data, 
             DBMedia.media_description : body.media_description, 
             DBMedia.media_link : body.media_link, 
             DBMedia.media_size : body.media_size, 
@@ -162,4 +164,4 @@ def get_media_content_by_id(media_id):
     if media == None:
         abort(404)
 
-    return Response(base64.b64decode(media.media_data.decode()), mimetype='image/jpeg')
+    return Response(base64.b64decode(media.media_data), mimetype='image/jpeg')

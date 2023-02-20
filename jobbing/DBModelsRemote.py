@@ -48,7 +48,7 @@ class Media(db.Model):
     __table_args__ = {'extend_existing': True}
     media_id = db.Column(db.Integer, primary_key=True)
     media_status_id = db.Column(db.Integer)
-    media_data = db.Column(db.LargeBinary)
+    media_data = db.Column(db.String(1000000))
     media_link = db.Column(db.String(200))
     media_title = db.Column(db.String(30))
     media_description = db.Column(db.String(100))

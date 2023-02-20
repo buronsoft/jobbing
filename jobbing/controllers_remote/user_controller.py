@@ -1,6 +1,7 @@
 from flask import abort, make_response, Response
 from flask import current_app, jsonify
 from flask_login import logout_user, login_user
+from datetime import datetime
 
 from werkzeug.security import generate_password_hash, check_password_hash
 import connexion
@@ -182,7 +183,7 @@ def get_user_media_by_id(user_model_id): # noqa: E501
         abort(404)
     return Media(media.media_id, 
         media.media_status_id, 
-        media.media_data.decode("utf-8"), 
+        media.media_data, 
         media.media_link, 
         media.media_title, 
         media.media_description, 
@@ -249,19 +250,26 @@ def signup(body): #noqa: E501
         )
 
     if connexion.request.is_json:
-        print(connexion.request.get_json())
         body = UserAuth.from_dict(connexion.request.get_json())
+
+        if DBUserAuth.query.filter(DBUserAuth.user_auth_email == body.user_auth_email).first():
+            return make_response('Could not verify', 400,
+            {'WWW-Authenticate' : 'Basic realm ="Email already in use !!"'}
+        )
 
         user = DBUserModel(
             user_status_id = 1, 
-            user_role_id = 4, 
+            user_role_id = 6, 
             user_model_first_name = '', 
             user_model_last_name = '', 
             user_model_surname = '', 
             user_model_birthday = '1970-01-01',
-            user_model_phone_number = '', 
-            user_model_media_id = 1, 
-            user_model_org = 1, 
+            user_model_phone_number = '',
+            user_model_org = 2,
+            user_model_registry_date = datetime.today().strftime('%Y-%m-%d'),
+            user_model_updated_date = datetime.today().strftime('%Y-%m-%d'),
+            user_model_creator_id = 1,
+            user_model_description= 'Nuevo usuario no verificado'
         )
 
         db.session.add(user)
@@ -303,6 +311,14 @@ def login(body): # noqa: E501
             {'WWW-Authenticate' : 'Basic realm ="User does not exist !!"'}
         )
 
+    model = DBUserModel.query.filter(DBUserModel.user_model_id == user.user_model_id).first()
+
+    if not model or model.user_role_id == 6:
+        # returns 401 if user has not been verified
+        return make_response('Could not verify', 401,
+            {'WWW-Authenticate' : 'Basic realm ="User not verified !!"'}
+        )
+
     if check_password_hash(user.user_auth_password, body['user_auth_password']):
         # generates the JWT Token
         token = jwt.encode({
@@ -317,6 +333,10 @@ def login(body): # noqa: E501
             'token' : token, 
             'user_model_id': user.user_model_id, 
             'user_auth_id': user.user_auth_id}), 201)
+
+    return make_response('Could not verify', 401,
+            {'WWW-Authenticate' : 'Basic realm ="Password is incorrect !!"'}
+        )
 
 """
 POST /recoverpwd
@@ -365,6 +385,7 @@ def recoverpwd(body): # noqa: E501
         'raw': encoded_message
     }
     # pylint: disable=E1101
+    #IF THIS IS NOT WORKING, DELETE token.json AND RUN quickstart.py TO RE-AUTHENTICATE
     send_message = (service.users().messages().send
         (userId="me", body=create_message).execute())
 
@@ -384,13 +405,13 @@ def resetpwd(body): # noqa: E501
         username = jwt.decode(body["reset_token"],
               current_app.secret_key, algorithms="HS256")['reset_password']    
     except:
-        return make_response(json.dumps(False), 201)
+        return make_response(json.dumps(False), 401)
 
     auth = DBUserAuth.query.filter(DBUserAuth.user_auth_name == username).first()
 
     if not auth:
         # returns false if user does not exist
-        return make_response(json.dumps(False), 201)
+        return make_response(json.dumps(False), 401)
 
     setattr(auth, 'user_auth_password', generate_password_hash(body["user_new_password"]))
     setattr(auth, 'user_auth_updated_date', datetime.now().strftime("%Y/%m/%d %H:%M:%S"))
@@ -541,7 +562,9 @@ def post_user(body): # noqa: E501
             user_model_media_id = body.user_model_media_id, 
             user_model_org = body.user_model_org, 
             user_model_creator_id = body.user_model_creator_id, 
-            user_model_description = body.user_model_description
+            user_model_description = body.user_model_description,
+            user_model_registry_date = body.user_model_registry_date, 
+            user_model_updated_date = body.user_model_updated_date
         )
 
         db.session.add(user)
@@ -656,7 +679,6 @@ def post_address(body):
 
     :rtype: UserAddress
     """
-
     if connexion.request.is_json:
         body = UserAddress.from_dict(connexion.request.get_json())
 
@@ -668,7 +690,9 @@ def post_address(body):
             id_state_code = body.id_state_code, 
             id_municipality = body.id_municipality, 
             id_country_code = body.id_country_code,  
-            id_zip_code = body.id_zip_code
+            id_zip_code = body.id_zip_code,
+            date_added = body.date_added, 
+            last_update_date = body.last_update_date
         )
 
         db.session.add(address)

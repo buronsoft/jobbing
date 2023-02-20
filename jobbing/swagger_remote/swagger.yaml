@@ -2765,7 +2765,7 @@ components:
       properties:
         user_role_id:
           type: integer
-          example: 1
+          example: 2
         user_role_name:
           type: string
           example: "ADMIN"
@@ -2773,7 +2773,7 @@ components:
           type: string
           example: "2021-12-29T00:00:00Z"
       example:
-        user_role_id: 1
+        user_role_id: 2
         user_role_name: "ADMIN"
         user_role_updated_date: "2021-12-29T00:00:00Z"
     WorkingArea:
