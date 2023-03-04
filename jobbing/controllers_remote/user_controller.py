@@ -354,7 +354,7 @@ def recoverpwd(body): # noqa: E501
         # returns false if user does not exist
         return make_response(json.dumps(False), 201)
 
-    creds = Credentials.from_authorized_user_file(os.path.dirname(__file__) +'/../token.json')
+    creds = Credentials.from_authorized_user_file(os.environ['GOOGLE_APPLICATION_CREDENTIALS'])
 
     service = build('gmail', 'v1', credentials=creds)
 
